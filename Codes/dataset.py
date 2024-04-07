@@ -122,3 +122,63 @@ def Xyz2irc(center_xyz, origin_xyz, vxSize_xyz, direction_a):
 
   return Irc_tuple(int(coord_irc[2]), int(coord_irc[1]), int(coord_irc[0]))
 
+'''
+Here we read the .mhd and .raw files from the disk and convert them into 3d array,
+There is a concept of Housefield Units in the medical images, HU of -1000 means air, +1000 means
+bones, metals and some others, 0 means water. most of the techniques are that remove -1000 HU values
+from the CT Scan because we call those air and outliers and they would affect our model during training
+like in batch normalization. we also remove +1000 hu values because they are also not relevent.
+the hu value around 0 will be useful because they can be tissues of our concern.
+
+we create GetRawCandidate function which will slice the candidate ct scan and only use
+that chunked area for our training purpose and validation purpose.
+
+
+'''
+class CT:
+
+  def __init__(self, series_uid):
+    mhd_path = glob.glob('Dataset/subset0/subset0/{}.mhd'.format(series_uid))[0]
+    ct_mhd = sitk.ReadImage(mhd_path)
+    ct_a = np.array(sitk.GetArrayFromImage(ct_mhd), dtype=np.float32)
+
+    ct_a = ct_a.clip(-1000, 1000, ct_a)
+    self.series_uid = series_uid
+    self.hu_a = ct_a
+    self.origin_xyz = Xyz_tuple(*ct_mhd.GetOrigin())
+    self.vxSize_xyz = Xyz_tuple(*ct_mhd.GetSpacing())
+    self.direction_a = np.array(ct_mhd.GetDirection()).reshape(3,3)
+
+
+  def getRawCandidate(self, center_xyz, width_irc):
+
+    slice_list = []
+
+    center_irc = Xyz2irc(center_xyz, 
+            self.origin_xyz, 
+            self.vxSize_xyz, 
+            self.direction_a)
+
+    for axis, center_val in enumerate(center_irc):
+      start_ndx = int(round(center_val - width_irc[axis] / 2))
+      end_ndx = int(start_ndx + width_irc[axis])
+
+      assert center_val >=0 and center_val < self.hu_a.shape[axis], repr([self.series_uid, center_xyz, self.origin_xyz, self.vxSize_xyz, center_irc, axis])
+
+      if start_ndx < 0 :
+        start_ndx = 0
+
+        end_ndx = width_irc[axis]
+
+      if end_ndx > self.hu_a.shape[axis]:
+        end_ndx = self.hu_a.shape[axis]
+
+        start_ndx = int(round(self.hu_a.shape[axis] - width_irc[axis]))
+      
+      slice_list.append(slice(start_ndx, end_ndx))
+    
+    chunk_t = self.hu_a[tuple(slice_list)]
+
+    return chunk_t, center_irc
+  
+
