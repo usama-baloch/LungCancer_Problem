@@ -60,6 +60,12 @@ def getCandidateInfoList(requireOnDisk_bool = True):
           else:
             CandidateDiameter_mm = annotationDiameter_mm
             break
+      '''
+      Now here we get the CandidateInfo_List which have the information of
+      every candidate in a tuple form, the information is NoduleBool indicates
+      whether this candidate have actual nodule or not, the nodule diameter in mm, 
+      series uid of every candidate, (x, y, z) coordinates of candidate.
+      '''
 
       CandidateInfo_List.append(CandidateInfoTuple(
           isNoduleBool,
@@ -73,7 +79,7 @@ def getCandidateInfoList(requireOnDisk_bool = True):
 
 
 '''
-Conver from IRC To XYZ Steps:
+Convert from IRC To XYZ Steps:
 
 1) Convert the Coordinate IRC TO CRI to align with XYZ
 2) Scale the indices with the voxel sizes
@@ -103,3 +109,4 @@ def Xyz2irc(center_xyz, origin_xyz, vxSize_xyz, direction_a):
   coord_irc = np.round(coord_irc)
 
   return Irc_tuple(int(coord_irc[2]), int(coord_irc[1]), int(coord_irc[0]))
+
