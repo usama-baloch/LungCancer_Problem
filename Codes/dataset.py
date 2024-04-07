@@ -35,6 +35,7 @@ def getCandidateInfoList(requireOnDisk_bool = True):
   # now we get candidate info:
 
   CandidateInfo_List = []
+  count = 0
   with open('Dataset/candidates.csv') as f:
 
     for row in list(csv.reader(f))[1:]:
@@ -45,6 +46,7 @@ def getCandidateInfoList(requireOnDisk_bool = True):
         continue
 
       isNoduleBool = bool(int(row[4]))
+
       CandidateCenter_xyz = tuple([float(x) for x in row[1:4]])
       CandidateDiameter_mm = 0.0
 
@@ -66,19 +68,29 @@ def getCandidateInfoList(requireOnDisk_bool = True):
       whether this candidate have actual nodule or not, the nodule diameter in mm, 
       series uid of every candidate, (x, y, z) coordinates of candidate.
       '''
-      
+
       CandidateInfo_List.append(CandidateInfoTuple(
           isNoduleBool,
           CandidateDiameter_mm,
           series_uid,
           CandidateCenter_xyz
       ))
-
+  print(count)
   CandidateInfo_List.sort(reverse=True)
   return CandidateInfo_List
 
 
 '''
+Unfortunately, all the candidates from the CandidateInfo_List have center data in millimeters not voxels!,
+we need to convert the (X, Y, Z) patient based coordinate system to the (I, R, C) voxel-based 
+coordinate system.
+
+The patient coordinate system is measured in millimeters and has an arbitrarily 
+positioned origin that does not correspond to the origin of the CT voxel array
+
+Here is a way:
+
+
 Convert from IRC To XYZ Steps:
 
 1) Convert the Coordinate IRC TO CRI to align with XYZ
@@ -109,3 +121,4 @@ def Xyz2irc(center_xyz, origin_xyz, vxSize_xyz, direction_a):
   coord_irc = np.round(coord_irc)
 
   return Irc_tuple(int(coord_irc[2]), int(coord_irc[1]), int(coord_irc[0]))
+
