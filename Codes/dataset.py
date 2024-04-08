@@ -193,6 +193,14 @@ def getCtRawCandidate(series_uid, center_xyz, width_irc):
   return chunk_t, center_irc
 
 
+'''
+-> now we need to separate the training and validation set.
+-> we are going to do that by designating every tenth sample, specified by val_stride parameter, as a member of validation set.
+-> We will also accept an isValSet_bool parameter and use it to determine whether we should keep only the
+training data, the validation data, or everything.
+
+'''
+
 class LunaDataset(Dataset):
 
   def __init__(self, val_stride = 0, isValSet_bool = None, series_uid = None):
@@ -200,6 +208,17 @@ class LunaDataset(Dataset):
     self.candidateInfo_list = copy.copy(getCandidateInfoList())
     if series_uid:
       self.candidateInfo_list = [x for x in self.candidateInfo_list if x.series_uid == series_uid]
+
+    '''
+    -> If we pass in a truthy series_uid, then the instance will only have nodules from that
+    series. This can be useful for visualization or debugging, by making it easier to look at,
+    for instance, a single problematic CT scan.
+
+    -> We allow for the Dataset to partition out 1/Nth of the data into a subset used for validating the model.
+    How we will handle that subset is based on the value of the isValSet _bool argument.
+
+    '''
+
 
     if isValSet_bool:
       assert val_stride > 0, val_stride
