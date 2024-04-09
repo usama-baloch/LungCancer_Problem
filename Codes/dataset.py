@@ -257,9 +257,9 @@ class LunaDataset(Dataset):
         center_irc
     )
 
-candidateInfo_List = getCandidateInfoList(requireOnDisk_bool = False)
-positive_list = [x for x in candidateInfo_List if x[0]]
-diameter_list = [x[1] for x in positive_list]
+# candidateInfo_List = getCandidateInfoList(requireOnDisk_bool = False)
+# positive_list = [x for x in candidateInfo_List if x[0]]
+# diameter_list = [x[1] for x in positive_list]
 
-for i in range(0, len(diameter_list), 100):
-  print(f'{i}   {diameter_list[i]}')
+# for i in range(0, len(diameter_list), 100):
+#   print(f'{i}   {diameter_list[i]}')
