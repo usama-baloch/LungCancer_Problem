@@ -49,3 +49,41 @@ could end up with only extreme values, making it seem as though our model is und
 
 #### Link of the Dataset: https://luna16.grand-challenge.org/
 #### Alternative Link of the Dataset if the above doesn't work: https://zenodo.org/records/3723295
+
+
+### High level Steps for the Solution:
+
+Here is the end-to-end full system to find out the patient's lung cancer using the CT Scan data, There are five main steps:
+
+
+1) Load the CT data file to take ct instance that is in the form of a 3D Scan. We use PyTorch to do all the conversion and loading.
+
+2) Feed the CT Scan data into a module that performs segmentation which flags the voxels of interest,
+Identify the voxels of potential tumors in the lungs using PyTorch to implement a technique known as segmentation. This is roughly akin to producing a
+heatmap of areas that should be fed into our classifier in step 3. This will allow us to focus on potential tumors inside the lungs and
+ignore huge swaths of uninteresting anatomy (a person can’t have lung cancer in the stomach, for example)
+
+3) group the interesting voxels into small lumps in the search for candidate nodules. Here, we will find the rough center of each
+hotspot on our heatmap. Each nodule can be located by the index, row, and column of its center point.
+
+4) The nodule locations (index, row, column) are combined back with the CT voxel data to produce nodule candidates, which can then be examined by
+our nodule classification model to determine whether they are actually nodules in the first place or not. we use 3D Convolution for classification.
+
+5) and after step 4 when we find out that this voxel group is a nodule then we find whether it is malignant or not.
+Similar to the nodule classifier in the previous step, we will attempt to determine whether the nodule is benign or malignant based on imaging data alone. We
+will take a simple maximum of the per-tumor malignancy predictions, as only one tumor needs to be malignant for a patient to have cancer
+
+
+-> The data we’ll use for training provides human-annotated output for both steps 3 and 4
+-> Human experts have annotated the data with nodule locations, so we can work on either steps 2 and 3 or step 4 in whatever order we prefer
+
+-> Our segmentation model is forced to consume the entire image, but we will structure things so that our classification model gets a
+zoomed-in view of the areas of interest.
+
+-> CTs order their slices such that the first slice is the inferior (toward the feet). So, Matplotlib renders the images upside
+down unless we take care to flip them
+
+-> the size of a nodule to 3 cm or less, the higher sizes will be called lung mass, not lung nodules.
+
+-> The key part is this: the cancers that we are trying to detect will always be nodules, either suspended in the very non-dense tissue of the lung or
+attached to the lung wall. That means we can limit our classifier to only nodules, rather than have it examine all tissue.
