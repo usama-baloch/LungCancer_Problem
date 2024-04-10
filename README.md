@@ -46,3 +46,6 @@ have been flagged as nodules. We have size information for about 1,200 nodules.
 This is useful since we can use it to make sure our training and validation data includes a
 representative spread of nodule sizes. Without this, it’s possible that our validation set
 could end up with only extreme values, making it seem as though our model is underperforming
+
+#### Link of the Dataset: https://luna16.grand-challenge.org/
+#### Alternative Link of the Dataset if the above doesn't work: https://zenodo.org/records/3723295
