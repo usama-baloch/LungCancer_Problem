@@ -75,6 +75,7 @@ will take a simple maximum of the per-tumor malignancy predictions, as only one 
 
 
 -> The data we’ll use for training provides human-annotated output for both steps 3 and 4
+
 -> Human experts have annotated the data with nodule locations, so we can work on either steps 2 and 3 or step 4 in whatever order we prefer
 
 -> Our segmentation model is forced to consume the entire image, but we will structure things so that our classification model gets a
