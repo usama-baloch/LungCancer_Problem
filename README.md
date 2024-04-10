@@ -24,3 +24,25 @@ Here: a Nodule is a solid mass of tissue that forms when abnormal cells group in
 If it is benign then there is no cancer but if it is malignant then it is.  A small tumor in the lung (just a few millimeters wide) is called a nodule.
 40% of lung nodules turn out to be malignant.
 
+#### In-depth details of Dataset:
+
+-> The CT Files have two files, one is .mhd file which contains the metadata of the image and one is .raw file containing the raw bytes
+that make up the 3D Array.
+
+-> Each File name starts with a unique series UID (the name comes from the DICOM) for the CT scan. For example, for series 1.2.3 the two files would be
+1.2.3.mhd, 1.2.3.raw.
+
+-> The candidates.csv file contains information about all lumps that potentially look like
+nodules, whether those lumps are malignant, benign tumors, or something else altogether.
+
+-> So we have 551,000 lines, each with a series-uid (which we’ll call series_uid in the
+code), some (X,Y,Z) coordinates, and a class column that corresponds to the nodule
+status (it’s a Boolean value: 0 for a candidate that is not an actual nodule, and 1 for a
+candidate that is a nodule, either malignant or benign). We have 1,351 candidates
+flagged as actual nodules.
+
+-> The annotations.csv file contains information about some of the candidates that
+have been flagged as nodules. We have size information for about 1,200 nodules.
+This is useful since we can use it to make sure our training and validation data includes a
+representative spread of nodule sizes. Without this, it’s possible that our validation set
+could end up with only extreme values, making it seem as though our model is underperforming
