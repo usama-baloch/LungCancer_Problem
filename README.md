@@ -51,7 +51,7 @@ could end up with only extreme values, making it seem as though our model is und
 #### Alternative Link of the Dataset if the above doesn't work: https://zenodo.org/records/3723295
 
 
-### High level Steps for the Solution:
+### High-level Steps for the Solution:
 
 Here is the end-to-end full system to find out the patient's lung cancer using the CT Scan data, There are five main steps:
 
@@ -84,7 +84,18 @@ zoomed-in view of the areas of interest.
 -> CTs order their slices such that the first slice is the inferior (toward the feet). So, Matplotlib renders the images upside
 down unless we take care to flip them
 
--> the size of a nodule to 3 cm or less, the higher sizes will be called lung mass, not lung nodules.
+-> The size of a nodule to 3 cm or less, the higher sizes will be called lung mass, not lung nodules.
 
 -> The key part is this: the cancers that we are trying to detect will always be nodules, either suspended in the very non-dense tissue of the lung or
 attached to the lung wall. That means we can limit our classifier to only nodules, rather than have it examine all tissue.
+
+#### CT Scan Samples:
+Some of the images are the sliced parts of the whole CT Scan. 
+
+![2](https://github.com/usama-baloch/LungCancer_Problem/assets/83680012/8901ce5f-9343-4a32-9653-0c8164d7c00b)
+
+
+![3](https://github.com/usama-baloch/LungCancer_Problem/assets/83680012/1c2075f7-f228-4cc8-90ba-9fcc7c9b1878)
+
+![4](https://github.com/usama-baloch/LungCancer_Problem/assets/83680012/083044cc-c658-4fa4-a8ee-7320f3d4087e)
+
