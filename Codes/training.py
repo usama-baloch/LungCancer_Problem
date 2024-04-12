@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from Codes.util import enumerateWithEstimate
 from Codes.util_config import logging
-
+from torch.utils.tensorboard import SummaryWriter
 from Codes.dataset import LunaDataset
 from Codes.model import LunaModel
 
@@ -122,6 +122,13 @@ class LunaTrainingApp:
         )
 
         return val_dl
+    
+    def initTensorboardWriters(self):
+        if self.trn_writer is None:
+            log_dir = os.path.join('runs', 'nodules_classification', self.time_str)
+
+            self.trn_writer = SummaryWriter(log_dir=log_dir + '-trn_cls-' + self.cli_args.comment)
+            self.val_writer = SummaryWriter(log_dir=log_dir + '-val_cls-' + self.cli_args.comment)
 
     def main(self):
         log.info("Starting {}, {}".format(type(self).__name__, self.cli_args))
@@ -237,6 +244,7 @@ class LunaTrainingApp:
             metrics_t,
             classificationThreshold=0.5,
     ):
+        
         self.initTensorboardWriters()
         log.info("E{} {}".format(
             epoch_ndx,
@@ -300,6 +308,37 @@ class LunaTrainingApp:
             )
         )
 
+        writer = getattr(self, mode_str + '_writer')
+
+        for key, value in metrics_dict.items():
+            writer.add_scalar(key, value, self.totalTrainingSamples_count)
+
+        writer.add_pr_curve(
+                'pr',
+                metrics_t[METRICS_LABEL_NDX],
+                metrics_t[METRICS_PRED_NDX],
+                self.totalTrainingSamples_count,
+        )
+
+        bins = [x/50.0 for x in range(51)]
+
+        negHist_mask = negLabel_mask & (metrics_t[METRICS_PRED_NDX] > 0.01)
+        posHist_mask = posLabel_mask & (metrics_t[METRICS_PRED_NDX] < 0.99)
+
+        if negHist_mask.any():
+            writer.add_histogram(
+                        'is_neg',
+                        metrics_t[METRICS_PRED_NDX, negHist_mask],
+                        self.totalTrainingSamples_count,
+                        bins=bins,
+            )
+        if posHist_mask.any():
+            writer.add_histogram(
+                        'is_pos',
+                        metrics_t[METRICS_PRED_NDX, posHist_mask],
+                        self.totalTrainingSamples_count,
+                        bins=bins,
+            )
 
 if __name__ == '__main__':
     LunaTrainingApp().main()
