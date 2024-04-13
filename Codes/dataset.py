@@ -4,6 +4,7 @@ import glob
 import functools
 import os, csv
 import SimpleITK as sitk
+import random
 import numpy as np
 import torch
 import copy
@@ -203,7 +204,7 @@ training data, the validation data, or everything.
 
 class LunaDataset(Dataset):
 
-  def __init__(self, val_stride = 0, isValSet_bool = None, series_uid = None):
+  def __init__(self, val_stride = 0, isValSet_bool = None, series_uid = None, int_ratio = 0.0):
 
     self.candidateInfo_list = copy.copy(getCandidateInfoList())
     if series_uid:
@@ -228,13 +229,39 @@ class LunaDataset(Dataset):
       del self.candidateInfo_list[::val_stride]
       assert self.candidateInfo_list
 
+    self.int_ratio = int_ratio
+
+    self.negative_list = [nt for nt in self.candidateInfo_list if not nt.isNoduleBool]
+    self.positive_list = [pt for pt in self.candidateInfo_list if pt.isNoduleBool]
+
+
+  def shuffleSamples(self):
+    if self.int_ratio:
+      random.shuffle(self.negative_list)
+      random.shuffle(self.positive_list)
+
 
   def __len__(self):
-    return len(self.candidateInfo_list)
+    if self.int_ratio:
+      return 200000
+    else:
+      return len(self.candidateInfo_list)
 
   def __getitem__(self, ndx):
 
-    candidateInfo_tup = self.candidateInfo_list[ndx]
+    if self.int_ratio:
+      pos_ndx = ndx // (self.int_ratio + 1)
+
+      if ndx % (self.int_ratio + 1):
+        neg_ndx = neg_ndx - 1 - pos_ndx
+        neg_ndx%=len(self.negative_list)
+        candidateInfo_tup = self.negative_list[neg_ndx]
+      else:
+        pos_ndx%=len(self.positive_list)
+        candidateInfo_tup = self.positive_list[pos_ndx]
+    else:
+      candidateInfo_tup = self.candidateInfo_list[ndx]
+      
     width_irc = (32, 48, 48)
 
     candidate_a, center_irc = getCtRawCandidate(candidateInfo_tup.series_uid,

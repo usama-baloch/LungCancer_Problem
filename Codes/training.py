@@ -49,6 +49,12 @@ class LunaTrainingApp:
             type=int,
         )
 
+        parser.add_argument('--balanced',
+            help="Balance the training data to half positive, half negative.",
+            action='store_true',
+            default=False,
+        )
+
         parser.add_argument('--tb-prefix',
             default='p2ch11',
             help="Data prefix to use for Tensorboard run. Defaults to chapter.",
@@ -89,6 +95,7 @@ class LunaTrainingApp:
         train_ds = LunaDataset(
             val_stride=10,
             isValSet_bool=False,
+            int_ratio=int(self.cli_args.balanced),
         )
 
         batch_size = self.cli_args.batch_size
@@ -159,7 +166,10 @@ class LunaTrainingApp:
 
 
     def doTraining(self, epoch_ndx, train_dl):
+        
         self.model.train()
+        train_dl.dataset.shuffleSamples()
+
         trnMetrics_g = torch.zeros(
             METRICS_SIZE,
             len(train_dl.dataset),
