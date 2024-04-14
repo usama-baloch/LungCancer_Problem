@@ -270,31 +270,42 @@ class LunaTrainingApp:
         neg_count = int(negLabel_mask.sum())
         pos_count = int(posLabel_mask.sum())
 
-        neg_correct = int((negLabel_mask & negPred_mask).sum())
-        pos_correct = int((posLabel_mask & posPred_mask).sum())
+        trueNeg_count = neg_correct = int((negLabel_mask & negPred_mask).sum())
+        truePos_count = pos_correct = int((posLabel_mask & posPred_mask).sum())
+
+        falsePos_count = neg_count - neg_correct
+        falseNeg_count = pos_count - pos_correct
 
         metrics_dict = {}
-        metrics_dict['loss/all'] = \
-            metrics_t[METRICS_LOSS_NDX].mean()
-        metrics_dict['loss/neg'] = \
-            metrics_t[METRICS_LOSS_NDX, negLabel_mask].mean()
-        metrics_dict['loss/pos'] = \
-            metrics_t[METRICS_LOSS_NDX, posLabel_mask].mean()
+        metrics_dict['loss/all'] = metrics_t[METRICS_LOSS_NDX].mean()
+        metrics_dict['loss/neg'] = metrics_t[METRICS_LOSS_NDX, negLabel_mask].mean()
+        metrics_dict['loss/pos'] = metrics_t[METRICS_LOSS_NDX, posLabel_mask].mean()
 
-        metrics_dict['correct/all'] = (pos_correct + neg_correct) \
-            / np.float32(metrics_t.shape[1]) * 100
-        metrics_dict['correct/neg'] = neg_correct / np.float32(neg_count) * 100
-        metrics_dict['correct/pos'] = pos_correct / np.float32(pos_count) * 100
+        metrics_dict['correct/all'] = (pos_correct + neg_correct) / metrics_t.shape[1] * 100
+        metrics_dict['correct/neg'] = (neg_correct) / neg_count * 100
+        metrics_dict['correct/pos'] = (pos_correct) / pos_count * 100
+
+        precision = metrics_dict['pr/precision'] = \
+            truePos_count / np.float32(truePos_count + falsePos_count)
+        recall    = metrics_dict['pr/recall'] = \
+            truePos_count / np.float32(truePos_count + falseNeg_count)
+
+        metrics_dict['pr/f1_score'] = \
+            2 * (precision * recall) / (precision + recall)
 
         log.info(
             ("E{} {:8} {loss/all:.4f} loss, "
                  + "{correct/all:-5.1f}% correct, "
+                 + "{pr/precision:.4f} precision, "
+                 + "{pr/recall:.4f} recall, "
+                 + "{pr/f1_score:.4f} f1 score"
             ).format(
                 epoch_ndx,
                 mode_str,
                 **metrics_dict,
             )
         )
+
         log.info(
             ("E{} {:8} {loss/neg:.4f} loss, "
                  + "{correct/neg:-5.1f}% correct ({neg_correct:} of {neg_count:})"
@@ -306,6 +317,7 @@ class LunaTrainingApp:
                 **metrics_dict,
             )
         )
+
         log.info(
             ("E{} {:8} {loss/pos:.4f} loss, "
                  + "{correct/pos:-5.1f}% correct ({pos_correct:} of {pos_count:})"
@@ -317,17 +329,17 @@ class LunaTrainingApp:
                 **metrics_dict,
             )
         )
-
+        
         writer = getattr(self, mode_str + '_writer')
 
         for key, value in metrics_dict.items():
             writer.add_scalar(key, value, self.totalTrainingSamples_count)
 
         writer.add_pr_curve(
-                'pr',
-                metrics_t[METRICS_LABEL_NDX],
-                metrics_t[METRICS_PRED_NDX],
-                self.totalTrainingSamples_count,
+            'pr',
+            metrics_t[METRICS_LABEL_NDX],
+            metrics_t[METRICS_PRED_NDX],
+            self.totalTrainingSamples_count,
         )
 
         bins = [x/50.0 for x in range(51)]
@@ -337,17 +349,18 @@ class LunaTrainingApp:
 
         if negHist_mask.any():
             writer.add_histogram(
-                        'is_neg',
-                        metrics_t[METRICS_PRED_NDX, negHist_mask],
-                        self.totalTrainingSamples_count,
-                        bins=bins,
+                'is_neg',
+                metrics_t[METRICS_PRED_NDX, negHist_mask],
+                self.totalTrainingSamples_count,
+                bins=bins,
             )
+            
         if posHist_mask.any():
             writer.add_histogram(
-                        'is_pos',
-                        metrics_t[METRICS_PRED_NDX, posHist_mask],
-                        self.totalTrainingSamples_count,
-                        bins=bins,
+                'is_pos',
+                metrics_t[METRICS_PRED_NDX, posHist_mask],
+                self.totalTrainingSamples_count,
+                bins=bins,
             )
 
 if __name__ == '__main__':
